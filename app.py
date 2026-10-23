@@ -12,7 +12,12 @@ from client_bp import client_bp
 
 
 def create_app():
-    app = Flask(__name__)
+    static_folder = os.path.join(os.path.dirname(__file__), "public", "static")
+    app = Flask(
+        __name__,
+        static_folder=static_folder,
+        static_url_path="/static",
+    )
     app.config.from_object(Config)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
