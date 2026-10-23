@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Payment | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bookings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <h1>Complete your payment</h1>
+        <p>Review your booking and pay using your chosen method.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="booking-card">
+            <div class="booking-top">
+                <div>
+                    <h3>{{ booking.service_name }}</h3>
+                    <span class="status status-{{ booking.status }}">{{ booking.status|replace('_', ' ')|title }}</span>
+                </div>
+                <div class="booking-price">&#8369;{{ booking.price|money }}</div>
+            </div>
+
+            <div class="booking-grid">
+                <div>
+                    <span>Booking</span>
+                    <strong>#{{ booking.booking_id }}</strong>
+                </div>
+                <div>
+                    <span>Date</span>
+                    <strong>{{ booking.booking_date|datefmt }}</strong>
+                </div>
+                <div>
+                    <span>Time</span>
+                    <strong>{{ booking.booking_time|timefmt }}</strong>
+                </div>
+                <div>
+                    <span>Payment method</span>
+                    <strong>{{ payment_labels.get(booking.payment_method, booking.payment_method|replace('_', ' ')|title) }}</strong>
+                </div>
+            </div>
+
+            {% if booking.payment_status == 'paid' %}
+            <div class="payment-panel">
+                <span class="status status-completed">Paid</span>
+                <p>
+                    Reference: <strong>{{ booking.payment_reference or 'N/A' }}</strong><br>
+                    Paid on {{ booking.paid_at|datefmt('%b %d, %Y %I:%M %p') }}
+                </p>
+            </div>
+            {% elif booking.status == 'cancelled' %}
+            <div class="payment-panel">
+                <span class="status status-cancelled">Cancelled</span>
+                <p>This booking was cancelled, so online payment is no longer available.</p>
+            </div>
+            {% elif not online_payment %}
+            <div class="payment-panel">
+                <span class="status status-pending">Pay at counter</span>
+                <p>You chose to pay with cash. Please pay at the counter when you arrive for your appointment.</p>
+            </div>
+            {% else %}
+            <div class="payment-panel">
+                <span class="status status-pending">Unpaid</span>
+                <p>
+                    You are about to pay <strong>&#8369;{{ booking.price|money }}</strong>
+                    using {{ payment_labels.get(booking.payment_method, booking.payment_method|replace('_', ' ')|title) }}.
+                </p>
+                <p class="payment-note">
+                    Demo checkout: clicking the button below records this booking as paid.
+                    No real money is charged until a payment gateway is connected.
+                </p>
+                <form method="POST" action="{{ url_for('client_services.payment_page', booking_id=booking.booking_id) }}">
+                    <button type="submit" class="btn btn-primary">
+                        Pay &#8369;{{ booking.price|money }} now
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="booking-actions">
+                <a class="btn btn-outline" href="{{ url_for('client_services.my_bookings_page') }}">Back to my bookings</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

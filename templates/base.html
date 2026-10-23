@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nice Day Carwash{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="logo" href="{{ url_for('main_pages.landing_page') }}">Nice Day <span>Carwash</span></a>
+
+            <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="siteNav">&#9776;</button>
+
+            <nav class="site-nav" id="siteNav">
+                <a href="{{ url_for('main_pages.landing_page') }}">Home</a>
+                <a href="{{ url_for('main_pages.about_page') }}">About</a>
+                <a href="{{ url_for('main_pages.services_page') }}">Services</a>
+            </nav>
+
+            <div class="header-actions">
+                {% if session.get('account_logged_in') %}
+                    {% set user = session['account_logged_in'] %}
+                    <details class="user-menu">
+                        <summary>{{ user['account_username'] }}</summary>
+                        <div class="user-menu-panel">
+                            {% if user['account_role'] == 'admin' %}
+                                <a href="{{ url_for('admin_panel.admin_dashboard') }}">Admin dashboard</a>
+                            {% else %}
+                                <a href="{{ url_for('client_services.my_bookings_page') }}">My bookings</a>
+                                <a href="{{ url_for('main_pages.services_page') }}">Book a service</a>
+                            {% endif %}
+                            <a class="logout-link" href="{{ url_for('authentication.logout') }}">Log out</a>
+                        </div>
+                    </details>
+                {% else %}
+                    <a class="btn btn-primary btn-sm" href="{{ url_for('authentication.login_page') }}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category if category in ['success', 'error', 'info'] else 'info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="site-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a class="logo logo-light" href="{{ url_for('main_pages.landing_page') }}">Nice Day <span>Carwash</span></a>
+                <p>Premium, eco-friendly car care in Iloilo City.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Explore</h3>
+                <a href="{{ url_for('main_pages.landing_page') }}">Home</a>
+                <a href="{{ url_for('main_pages.about_page') }}">About</a>
+                <a href="{{ url_for('main_pages.services_page') }}">Services</a>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <p>Lopez Jaena St, Jaro</p>
+                <p>0927 457 6796</p>
+                <p>nicedaycarwashiloilo@gmail.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; {{ current_year }} AutoWash &middot; Nice Day Carwash</div>
+    </footer>
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const siteNav = document.getElementById('siteNav');
+        if (menuToggle && siteNav) {
+            menuToggle.addEventListener('click', () => {
+                const isOpen = siteNav.classList.toggle('open');
+                menuToggle.setAttribute('aria-expanded', isOpen);
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            document.querySelectorAll('details.user-menu[open]').forEach((menu) => {
+                if (!menu.contains(event.target)) {
+                    menu.removeAttribute('open');
+                }
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

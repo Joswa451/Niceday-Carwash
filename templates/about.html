@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <h1>About Nice Day Carwash</h1>
+        <p>Your trusted partner for premium car care in Iloilo City.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="about-split">
+            <div>
+                <span class="eyebrow eyebrow-dark">Our story</span>
+                <h2>A clean car makes for a nicer day.</h2>
+                <p>
+                    Founded in Iloilo City, Nice Day Carwash combines quality, convenience and
+                    environmental responsibility. We believe every day should be a nice day,
+                    starting with a clean, well-maintained vehicle.
+                </p>
+            </div>
+            <div class="about-highlight">
+                <span class="highlight-icon">&#128663;</span>
+                <h3>Premium car care</h3>
+                <p>Careful hand washing, modern equipment and friendly service on every visit.</p>
+            </div>
+        </div>
+
+        <div class="about-split">
+            <div class="about-highlight">
+                <span class="highlight-icon">&#127775;</span>
+                <h3>Excellence in service</h3>
+                <p>We pay attention to the details that make your vehicle feel brand new again.</p>
+            </div>
+            <div>
+                <span class="eyebrow eyebrow-dark">Our mission</span>
+                <h2>Exceptional service, every time.</h2>
+                <p>
+                    Our mission is to exceed expectations while protecting the environment.
+                    From a quick rinse to a full detail, our team treats every vehicle with
+                    the same professional care.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Our values</h2>
+            <p>The principles behind every wash.</p>
+        </div>
+        <div class="values-grid">
+            <article class="value-card">
+                <div class="value-icon">&#127919;</div>
+                <h3>Quality</h3>
+                <p>We never compromise on the quality of our service and always strive for perfection.</p>
+            </article>
+            <article class="value-card">
+                <div class="value-icon">&#129309;</div>
+                <h3>Trust</h3>
+                <p>Reliable and honest service that builds lasting relationships with our customers.</p>
+            </article>
+            <article class="value-card">
+                <div class="value-icon">&#127793;</div>
+                <h3>Sustainability</h3>
+                <p>Eco-friendly practices and products that help protect our environment.</p>
+            </article>
+            <article class="value-card">
+                <div class="value-icon">&#9889;</div>
+                <h3>Efficiency</h3>
+                <p>Fast, professional service that respects your time without cutting corners.</p>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

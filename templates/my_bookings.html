@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bookings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <h1>My Bookings</h1>
+        <p>Track and manage all your car wash appointments.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="bookings-header">
+            <h2>Your appointments</h2>
+            <a class="btn btn-primary" href="{{ url_for('main_pages.services_page') }}">Book new service</a>
+        </div>
+
+        {% if bookings %}
+        <div class="booking-list">
+            {% for booking in bookings %}
+            <article class="booking-card">
+                <div class="booking-top">
+                    <div>
+                        <h3>{{ booking.service_name }}</h3>
+                        <span class="status status-{{ booking.status }}">{{ booking.status|replace('_', ' ')|title }}</span>
+                        <span class="status status-{{ 'completed' if booking.payment_status == 'paid' else 'pending' }}">
+                            {{ 'Paid' if booking.payment_status == 'paid' else 'Unpaid' }}
+                        </span>
+                    </div>
+                    <div class="booking-price">&#8369;{{ booking.price|money }}</div>
+                </div>
+
+                <div class="booking-grid">
+                    <div>
+                        <span>Date</span>
+                        <strong>{{ booking.booking_date|datefmt }}</strong>
+                    </div>
+                    <div>
+                        <span>Time</span>
+                        <strong>{{ booking.booking_time|timefmt }}</strong>
+                    </div>
+                    <div>
+                        <span>Vehicle</span>
+                        <strong>{{ booking.vehicle_type }}</strong>
+                    </div>
+                    <div>
+                        <span>Customer</span>
+                        <strong>{{ booking.customer_name }}</strong>
+                    </div>
+                    <div>
+                        <span>Payment</span>
+                        <strong>{{ payment_labels.get(booking.payment_method, booking.payment_method|replace('_', ' ')|title) }}</strong>
+                        {% if booking.payment_reference %}
+                        <small class="cell-muted">{{ booking.payment_reference }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if booking.notes %}
+                <div class="booking-notes"><strong>Notes:</strong> {{ booking.notes }}</div>
+                {% endif %}
+
+                {% set can_pay = booking.payment_status != 'paid'
+                    and booking.payment_method in ['gcash', 'maya', 'bank_transfer']
+                    and booking.status != 'cancelled' %}
+                {% set can_cancel = booking.status in ['pending', 'confirmed'] %}
+                {% if can_pay or can_cancel %}
+                <div class="booking-actions">
+                    {% if can_pay %}
+                    <a class="btn btn-primary btn-sm"
+                       href="{{ url_for('client_services.payment_page', booking_id=booking.booking_id) }}">Pay now</a>
+                    {% endif %}
+                    {% if can_cancel %}
+                    <form method="POST" action="{{ url_for('client_services.booking_process') }}">
+                        <input type="hidden" name="action" value="cancel">
+                        <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Cancel this booking?')">Cancel booking</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">&#128197;</div>
+            <h3>No bookings yet</h3>
+            <p>You haven't booked a service yet. Your next clean car is one click away.</p>
+            <a class="btn btn-primary" href="{{ url_for('main_pages.services_page') }}">Book your first service</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

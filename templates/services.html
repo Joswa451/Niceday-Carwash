@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Services | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/services.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <h1>Our Services</h1>
+        <p>Professional car care packages tailored to your vehicle.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Choose your package</h2>
+            <p>From a quick express wash to a full premium detail.</p>
+        </div>
+
+        {% set icons = ['🚿', '✨', '💎', '🔧', '🚗', '🌿'] %}
+        {% if services %}
+        <div class="service-grid">
+            {% for service in services %}
+            <article class="service-card">
+                <div class="service-icon">{{ icons[loop.index0 % icons|length] }}</div>
+                <div class="service-title-row">
+                    <h3>{{ service.service_name }}</h3>
+                    <span class="service-duration">{{ service.duration_minutes }} min</span>
+                </div>
+                <div class="price">&#8369;{{ service.price|money }}</div>
+                {% if service.service_description %}
+                <p class="service-desc">{{ service.service_description }}</p>
+                {% endif %}
+                {% if session.get('account_logged_in') and session['account_logged_in']['account_role'] == 'client' %}
+                <button class="btn btn-primary service-btn"
+                        type="button"
+                        data-id="{{ service.service_id }}"
+                        data-name="{{ service.service_name }}"
+                        data-price="{{ service.price|money }}"
+                        onclick="openBookingModal(this)">
+                    Book now
+                </button>
+                {% elif session.get('account_logged_in') %}
+                <a class="btn btn-outline service-btn" href="{{ url_for('admin_panel.admin_dashboard') }}">Admin account</a>
+                {% else %}
+                <a class="btn btn-outline service-btn" href="{{ url_for('authentication.login_page') }}">Login to book</a>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">&#128295;</div>
+            <h3>No services available yet</h3>
+            <p>Please check back soon.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section section-alt">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Additional services</h2>
+            <p>Small extras that make a big difference.</p>
+        </div>
+        <div class="addon-grid">
+            <div class="addon-item">
+                <span class="addon-icon">&#129533;</span>
+                <div>
+                    <h4>Headlight Restoration</h4>
+                    <p>&#8369;200 &middot; Restore clarity to foggy headlights</p>
+                </div>
+            </div>
+            <div class="addon-item">
+                <span class="addon-icon">&#128737;</span>
+                <div>
+                    <h4>Paint Protection Film</h4>
+                    <p>&#8369;1,500 &middot; Ultimate paint protection</p>
+                </div>
+            </div>
+            <div class="addon-item">
+                <span class="addon-icon">&#10052;</span>
+                <div>
+                    <h4>AC Cleaning</h4>
+                    <p>&#8369;300 &middot; Fresh and clean air system</p>
+                </div>
+            </div>
+            <div class="addon-item">
+                <span class="addon-icon">&#128269;</span>
+                <div>
+                    <h4>Scratch Removal</h4>
+                    <p>&#8369;400 &middot; Professional scratch repair</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Our guarantee</h2>
+            <p>Simple promises we stand behind.</p>
+        </div>
+        <div class="guarantee-grid">
+            <div class="guarantee-item">
+                <div class="guarantee-icon">&#9889;</div>
+                <h3>Fast service</h3>
+                <p>Most services are completed within 30 to 60 minutes.</p>
+            </div>
+            <div class="guarantee-item">
+                <div class="guarantee-icon">&#128175;</div>
+                <h3>Quality assured</h3>
+                <p>100% satisfaction guarantee or your money back.</p>
+            </div>
+            <div class="guarantee-item">
+                <div class="guarantee-icon">&#127775;</div>
+                <h3>Professional staff</h3>
+                <p>Trained and certified car care specialists.</p>
+            </div>
+            <div class="guarantee-item">
+                <div class="guarantee-icon">&#127793;</div>
+                <h3>Eco-friendly</h3>
+                <p>Environmentally responsible products and methods.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal" id="bookingModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+        <button class="modal-close" type="button" aria-label="Close" onclick="closeBookingModal()">&times;</button>
+        <h2 id="bookingModalTitle">Book a service</h2>
+        <p class="modal-subtitle" id="selectedService"></p>
+
+        <form action="{{ url_for('client_services.book_service') }}" method="POST" id="bookingForm">
+            <input type="hidden" id="serviceId" name="service_id" value="">
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="bookingDate">Date</label>
+                    <input type="date" id="bookingDate" name="booking_date" required>
+                </div>
+                <div class="field">
+                    <label for="bookingTime">Time</label>
+                    <select id="bookingTime" name="booking_time" required>
+                        <option value="">Choose a time</option>
+                        <option value="06:00">6:00 AM</option>
+                        <option value="07:00">7:00 AM</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="customerName">Full name</label>
+                <input type="text" id="customerName" name="customer_name" required
+                       value="{{ session.get('account_logged_in', {}).get('full_name', '') }}"
+                       placeholder="Your full name">
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="customerPhone">Phone <span class="hint">optional</span></label>
+                    <input type="tel" id="customerPhone" name="customer_phone"
+                           value="{{ session.get('account_logged_in', {}).get('phone', '') }}"
+                           placeholder="Your phone number">
+                </div>
+                <div class="field">
+                    <label for="vehicleType">Vehicle type</label>
+                    <input type="text" id="vehicleType" name="vehicle_type" required
+                           placeholder="e.g. Toyota Camry">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="paymentMethod">Payment method</label>
+                <select id="paymentMethod" name="payment_method" required>
+                    {% for value, label in payment_methods %}
+                    <option value="{{ value }}" {% if value == 'cash' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <span class="hint">Pay using your chosen method when the booking is confirmed.</span>
+            </div>
+
+            <div class="field">
+                <label for="notes">Notes <span class="hint">optional</span></label>
+                <textarea id="notes" name="notes" rows="3" placeholder="Anything we should know?"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeBookingModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Confirm booking</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const bookingModal = document.getElementById('bookingModal');
+
+    function openBookingModal(button) {
+        document.getElementById('serviceId').value = button.dataset.id;
+        document.getElementById('selectedService').textContent =
+            button.dataset.name + ' - \u20B1' + button.dataset.price;
+
+        const dateInput = document.getElementById('bookingDate');
+        const today = new Date();
+        dateInput.min = today.toLocaleDateString('en-CA');
+        if (!dateInput.value) {
+            dateInput.value = dateInput.min;
+        }
+
+        bookingModal.classList.add('is-open');
+        bookingModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeBookingModal() {
+        bookingModal.classList.remove('is-open');
+        bookingModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+
+    if (bookingModal) {
+        bookingModal.addEventListener('click', (event) => {
+            if (event.target === bookingModal) {
+                closeBookingModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && bookingModal.classList.contains('is-open')) {
+            closeBookingModal();
+        }
+    });
+</script>
+{% endblock %}

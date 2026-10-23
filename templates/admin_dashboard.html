@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Nice Day Carwash</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-shell">
+        <header class="admin-header">
+            <div class="admin-header-inner">
+                <a class="logo logo-light" href="{{ url_for('main_pages.landing_page') }}">Nice Day <span>Carwash</span></a>
+                <div class="admin-user">
+                    <span>Signed in as <strong>{{ logged_in_user.account_username }}</strong></span>
+                    <a class="btn btn-ghost btn-sm" href="{{ url_for('main_pages.landing_page') }}">View site</a>
+                    <a class="btn btn-light btn-sm" href="{{ url_for('authentication.logout') }}">Log out</a>
+                </div>
+            </div>
+        </header>
+
+        <nav class="admin-nav">
+            <div class="admin-nav-inner">
+                <a href="#bookings" class="tab-link active">Bookings</a>
+                <a href="#services" class="tab-link">Services</a>
+                <a href="#accounts" class="tab-link">Accounts</a>
+                <a href="#reports" class="tab-link">Reports</a>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="admin-flash-container">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category if category in ['success', 'error', 'info'] else 'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <main class="admin-main">
+            <section id="bookings" class="tab-content active">
+                <div class="section-heading">
+                    <h1>Bookings</h1>
+                    <p>Review and update every customer appointment.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span>Total bookings</span>
+                        <strong>{{ bookings|length }}</strong>
+                    </div>
+                    <div class="stat-card warning">
+                        <span>Pending</span>
+                        <strong>{{ bookings|selectattr("status", "equalto", "pending")|list|length }}</strong>
+                    </div>
+                    <div class="stat-card info">
+                        <span>Confirmed</span>
+                        <strong>{{ bookings|selectattr("status", "equalto", "confirmed")|list|length }}</strong>
+                    </div>
+                    <div class="stat-card success">
+                        <span>Completed</span>
+                        <strong>{{ bookings|selectattr("status", "equalto", "completed")|list|length }}</strong>
+                    </div>
+                </div>
+
+                {% if bookings %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Service</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Schedule</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>#{{ booking.booking_id }}</td>
+                                <td>{{ booking.client_name }}</td>
+                                <td>
+                                    {{ booking.service_name }}
+                                    <span class="cell-muted">&#8369;{{ booking.price|money }}</span>
+                                </td>
+                                <td>{{ booking.customer_name }}</td>
+                                <td>{{ booking.vehicle_type }}</td>
+                                <td>
+                                    {{ booking.booking_date|datefmt }}
+                                    <span class="cell-muted">{{ booking.booking_time|timefmt }}</span>
+                                </td>
+                                <td>
+                                    {{ payment_labels.get(booking.payment_method, booking.payment_method|replace('_', ' ')|title) }}
+                                    <span class="cell-muted">
+                                        {{ 'Paid' if booking.payment_status == 'paid' else 'Unpaid' }}
+                                        {% if booking.payment_reference %}&middot; {{ booking.payment_reference }}{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status status-{{ booking.status }}">{{ booking.status|replace('_', ' ')|title }}</span>
+                                </td>
+                                <td>
+                                    <div class="row-actions">
+                                        <form method="POST" action="{{ url_for('client_services.booking_process') }}" class="inline-form">
+                                            <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+                                            <select name="status" class="status-select" aria-label="Booking status">
+                                                <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                                                <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                                <option value="in_progress" {% if booking.status == 'in_progress' %}selected{% endif %}>In progress</option>
+                                                <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                                                <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                            </select>
+                                            <button type="submit" name="action" value="update_status" class="btn btn-outline btn-sm">Save</button>
+                                        </form>
+                                        {% if booking.payment_status != 'paid' and booking.status != 'cancelled' %}
+                                        <form method="POST" action="{{ url_for('client_services.booking_process') }}" class="inline-form">
+                                            <input type="hidden" name="action" value="mark_paid">
+                                            <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+                                            <button type="submit" class="btn btn-outline btn-sm">Mark paid</button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('admin_panel.delete_booking') }}" class="inline-form">
+                                            <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Delete this booking? This cannot be undone.')">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">&#128197;</div>
+                    <h3>No bookings yet</h3>
+                    <p>New bookings will appear here automatically.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section id="services" class="tab-content">
+                <div class="section-heading">
+                    <h1>Services</h1>
+                    <p>Manage the packages customers can book.</p>
+                </div>
+
+                <div class="panel">
+                    <h2>Add a new service</h2>
+                    <form method="POST" action="{{ url_for('admin_panel.add_service') }}">
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="service_name">Service name</label>
+                                <input type="text" id="service_name" name="service_name" required>
+                            </div>
+                            <div class="field">
+                                <label for="price">Price (&#8369;)</label>
+                                <input type="number" id="price" name="price" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="duration_minutes">Duration (minutes)</label>
+                                <input type="number" id="duration_minutes" name="duration_minutes" min="1" required>
+                            </div>
+                            <div class="field">
+                                <label for="service_description">Description</label>
+                                <input type="text" id="service_description" name="service_description">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add service</button>
+                    </form>
+                </div>
+
+                {% if services %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Price</th>
+                                <th>Duration</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in services %}
+                            <tr>
+                                <td>#{{ service.service_id }}</td>
+                                <td>{{ service.service_name }}</td>
+                                <td>{{ service.service_description or '-' }}</td>
+                                <td>&#8369;{{ service.price|money }}</td>
+                                <td>{{ service.duration_minutes }} min</td>
+                                <td>{{ service.created_at|datefmt }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin_panel.delete_service') }}" class="inline-form">
+                                        <input type="hidden" name="service_id" value="{{ service.service_id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Delete this service? This cannot be undone.')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">&#128295;</div>
+                    <h3>No services yet</h3>
+                    <p>Add your first service using the form above.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section id="accounts" class="tab-content">
+                <div class="section-heading">
+                    <h1>Accounts</h1>
+                    <p>Manage client and administrator accounts.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span>Total accounts</span>
+                        <strong>{{ accounts|length }}</strong>
+                    </div>
+                    <div class="stat-card info">
+                        <span>Admins</span>
+                        <strong>{{ accounts|selectattr("account_role", "equalto", "admin")|list|length }}</strong>
+                    </div>
+                    <div class="stat-card success">
+                        <span>Clients</span>
+                        <strong>{{ accounts|selectattr("account_role", "equalto", "client")|list|length }}</strong>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Create an account</h2>
+                    <form method="POST" action="{{ url_for('admin_panel.create_account') }}">
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="username_inp">Username</label>
+                                <input type="text" id="username_inp" name="username_inp" minlength="3" required>
+                            </div>
+                            <div class="field">
+                                <label for="password_inp">Password</label>
+                                <input type="password" id="password_inp" name="password_inp" minlength="6" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="role_inp">Role</label>
+                                <select id="role_inp" name="role_inp" required>
+                                    <option value="">Select role</option>
+                                    <option value="client">Client</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="email_inp">Email</label>
+                                <input type="email" id="email_inp" name="email_inp" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create account</button>
+                    </form>
+                </div>
+
+                {% if accounts %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Email</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in accounts %}
+                            <tr>
+                                <td>#{{ account.account_id }}</td>
+                                <td>{{ account.account_username }}</td>
+                                <td>
+                                    <span class="role-badge role-{{ account.account_role }}">{{ account.account_role|title }}</span>
+                                </td>
+                                <td>{{ account.account_email or '-' }}</td>
+                                <td>{{ account.created_at|datefmt }}</td>
+                                <td>
+                                    {% if account.account_id != logged_in_user.account_id %}
+                                    <form method="POST" action="{{ url_for('admin_panel.delete_account') }}" class="inline-form">
+                                        <input type="hidden" name="account_id" value="{{ account.account_id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Delete account {{ account.account_username }}? This cannot be undone.')">Delete</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="cell-muted">Current user</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">&#128100;</div>
+                    <h3>No accounts yet</h3>
+                    <p>Create the first account using the form above.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section id="reports" class="tab-content">
+                <div class="section-heading">
+                    <h1>Reports</h1>
+                    <p>A quick snapshot of the business.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span>Total bookings</span>
+                        <strong>{{ bookings|length }}</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span>Services</span>
+                        <strong>{{ services|length }}</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span>Accounts</span>
+                        <strong>{{ accounts|length }}</strong>
+                    </div>
+                    <div class="stat-card success">
+                        <span>Revenue (completed)</span>
+                        <strong>&#8369;{{ (bookings|selectattr("status", "equalto", "completed")|sum(attribute='price'))|money }}</strong>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Recent bookings</h2>
+                    {% if bookings %}
+                    <ul class="activity-list">
+                        {% for booking in bookings[:5] %}
+                        <li class="activity-item">
+                            <div>
+                                <strong>{{ booking.service_name }}</strong>
+                                <span class="cell-muted">by {{ booking.customer_name }}</span>
+                            </div>
+                            <div class="activity-meta">
+                                <span class="status status-{{ booking.status }}">{{ booking.status|replace('_', ' ')|title }}</span>
+                                <span class="status status-{{ 'completed' if booking.payment_status == 'paid' else 'pending' }}">
+                                    {{ 'Paid' if booking.payment_status == 'paid' else 'Unpaid' }}
+                                </span>
+                                <span>&#8369;{{ booking.price|money }}</span>
+                                <span class="cell-muted">{{ booking.created_at|datefmt }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="cell-muted">No activity to show yet.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.querySelectorAll('.tab-link').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+
+                document.querySelectorAll('.tab-link').forEach((tab) => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+
+                link.classList.add('active');
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

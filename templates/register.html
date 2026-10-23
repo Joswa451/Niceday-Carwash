@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Register | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card auth-card-wide">
+        <h1>Create an account</h1>
+        <p class="auth-subtitle">Join Nice Day Carwash and book in seconds.</p>
+
+        <form action="{{ url_for('authentication.register_process') }}" method="POST" class="auth-form" id="registerForm">
+            <div class="form-row">
+                <div class="field">
+                    <label for="full_name">Full name</label>
+                    <input type="text" id="full_name" name="full_name" autocomplete="name" required>
+                </div>
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autocomplete="username" minlength="3" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="phone">Phone <span class="hint">optional</span></label>
+                    <input type="tel" id="phone" name="phone" autocomplete="tel">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="new-password" minlength="6" required>
+                    <span class="hint">Minimum 6 characters</span>
+                </div>
+                <div class="field">
+                    <label for="confirm_password">Confirm password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
+                    <span class="hint" id="password-match"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Create account</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('authentication.login_page') }}">Sign in here</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const passwordMatch = document.getElementById('password-match');
+    const submitBtn = document.getElementById('submit-btn');
+    const form = document.getElementById('registerForm');
+
+    function validatePasswords() {
+        password.classList.remove('input-error', 'input-success');
+        confirmPassword.classList.remove('input-error', 'input-success');
+        passwordMatch.classList.remove('match', 'no-match');
+
+        if (confirmPassword.value === '') {
+            passwordMatch.textContent = '';
+            submitBtn.disabled = false;
+            return;
+        }
+
+        if (password.value === confirmPassword.value) {
+            password.classList.add('input-success');
+            confirmPassword.classList.add('input-success');
+            passwordMatch.classList.add('match');
+            passwordMatch.textContent = 'Passwords match';
+            submitBtn.disabled = false;
+        } else {
+            password.classList.add('input-error');
+            confirmPassword.classList.add('input-error');
+            passwordMatch.classList.add('no-match');
+            passwordMatch.textContent = 'Passwords do not match';
+            submitBtn.disabled = true;
+        }
+    }
+
+    password.addEventListener('input', validatePasswords);
+    confirmPassword.addEventListener('input', validatePasswords);
+
+    form.addEventListener('submit', (event) => {
+        if (password.value !== confirmPassword.value) {
+            event.preventDefault();
+            alert('Passwords do not match. Please check and try again.');
+            return;
+        }
+        if (password.value.length < 6) {
+            event.preventDefault();
+            alert('Password must be at least 6 characters long.');
+        }
+    });
+</script>
+{% endblock %}

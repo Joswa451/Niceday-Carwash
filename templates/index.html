@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Nice Day Carwash | Premium car care in Iloilo City{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-inner">
+        <span class="eyebrow">Iloilo City's trusted car wash</span>
+        <h1>Premium car care,<br>made simple.</h1>
+        <p>Professional, eco-friendly cleaning that keeps your vehicle looking its best - without the wait.</p>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="{{ url_for('main_pages.services_page') }}">Book a wash</a>
+            <a class="btn btn-ghost btn-lg" href="{{ url_for('main_pages.about_page') }}">Learn more</a>
+        </div>
+        <div class="hero-stats">
+            <div><strong>30 min</strong><span>Average wash</span></div>
+            <div><strong>100%</strong><span>Eco-friendly products</span></div>
+            <div><strong>4.9/5</strong><span>Customer rating</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="feature-grid">
+            <article class="feature-card">
+                <div class="feature-icon">&#9889;</div>
+                <h3>Fast service</h3>
+                <p>Most washes are finished in 30 to 60 minutes so you can get back on the road.</p>
+            </article>
+            <article class="feature-card">
+                <div class="feature-icon">&#127793;</div>
+                <h3>Eco-friendly</h3>
+                <p>Biodegradable products and water-saving methods that are kinder to the planet.</p>
+            </article>
+            <article class="feature-card">
+                <div class="feature-icon">&#128737;</div>
+                <h3>Quality assured</h3>
+                <p>Trained specialists and a satisfaction guarantee on every single service.</p>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,164 @@
+.bookings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.bookings-header h2 {
+    font-size: clamp(1.4rem, 3vw, 1.75rem);
+    letter-spacing: -0.02em;
+    color: var(--dark);
+}
+
+.booking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.booking-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: var(--transition);
+}
+
+.booking-card:hover {
+    box-shadow: var(--shadow);
+}
+
+.booking-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.booking-top h3 {
+    font-size: 1.2rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.booking-price {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    white-space: nowrap;
+}
+
+.booking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+}
+
+.booking-grid div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.booking-grid span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+
+.booking-grid strong {
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.booking-grid small {
+    font-size: 0.76rem;
+    color: var(--muted);
+    word-break: break-all;
+}
+
+.booking-top .status + .status {
+    margin-left: 6px;
+}
+
+.payment-panel {
+    margin-top: 18px;
+    padding: 18px;
+    background: #f8fafb;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.payment-panel p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.payment-panel form {
+    margin-top: 14px;
+}
+
+.payment-note {
+    padding: 10px 12px;
+    background: #fff8e6;
+    border-left: 3px solid #f0b429;
+    border-radius: 6px;
+    color: #7a5a00 !important;
+}
+
+.booking-notes {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: #f8fafb;
+    border-radius: 9px;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.booking-notes strong {
+    color: var(--dark);
+}
+
+.booking-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 560px) {
+    .booking-card {
+        padding: 20px;
+    }
+
+    .booking-top {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .booking-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .booking-actions {
+        justify-content: stretch;
+    }
+
+    .booking-actions .btn {
+        width: 100%;
+    }
+}

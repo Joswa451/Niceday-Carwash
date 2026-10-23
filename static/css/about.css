@@ -1,0 +1,89 @@
+.about-split {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+    margin-bottom: 56px;
+}
+
+.about-split:last-child {
+    margin-bottom: 0;
+}
+
+.about-split h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+    color: var(--dark);
+    margin-bottom: 12px;
+}
+
+.about-split p {
+    color: var(--muted);
+}
+
+.about-highlight {
+    background: linear-gradient(140deg, #0b2433, #0b5f6a);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 36px 30px;
+}
+
+.about-highlight .highlight-icon {
+    display: inline-block;
+    font-size: 2rem;
+    margin-bottom: 14px;
+}
+
+.about-highlight h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+
+.about-highlight p {
+    color: #c9e4ea;
+    font-size: 0.92rem;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.value-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    transition: var(--transition);
+}
+
+.value-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    background: #fff;
+}
+
+.value-icon {
+    font-size: 1.9rem;
+    margin-bottom: 12px;
+}
+
+.value-card h3 {
+    font-size: 1.05rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.value-card p {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+    .about-split {
+        grid-template-columns: 1fr;
+        gap: 26px;
+        margin-bottom: 40px;
+    }
+}

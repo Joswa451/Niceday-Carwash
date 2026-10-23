@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Nice Day Carwash{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">Sign in to your Nice Day Carwash account.</p>
+
+        <form action="{{ url_for('authentication.login_process') }}" method="POST" class="auth-form">
+            <input type="hidden" name="next" value="{{ request.path }}">
+
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="user_inp" autocomplete="username" required autofocus>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="pass_inp" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{{ url_for('authentication.register_page') }}">Register here</a></p>
+            <p class="auth-muted"><a href="{{ url_for('authentication.admin_login') }}">Admin login</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
