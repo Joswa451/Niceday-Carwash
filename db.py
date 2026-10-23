@@ -99,7 +99,7 @@ DEFAULT_ADMIN = {
 
 
 def _connect(database=None):
-    return pymysql.connect(
+    connect_kwargs = dict(
         host=Config.MYSQL_HOST,
         port=Config.MYSQL_PORT,
         user=Config.MYSQL_USER,
@@ -110,6 +110,12 @@ def _connect(database=None):
         autocommit=False,
         connect_timeout=10,
     )
+    if Config.MYSQL_SSL:
+        ssl_config = {}
+        if Config.MYSQL_SSL_CA:
+            ssl_config["ca"] = Config.MYSQL_SSL_CA
+        connect_kwargs["ssl"] = ssl_config
+    return pymysql.connect(**connect_kwargs)
 
 
 def _ensure_database():

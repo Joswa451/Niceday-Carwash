@@ -10,6 +10,13 @@ class Config:
     MYSQL_USER = os.environ.get("MYSQL_USER", "root")
     MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
     MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "niceday_carwash")
+    MYSQL_SSL = os.environ.get("MYSQL_SSL", "false").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    MYSQL_SSL_CA = os.environ.get("MYSQL_SSL_CA")
     UPLOAD_FOLDER = os.environ.get(
         "UPLOAD_FOLDER",
         "/tmp/niceday-carwash-uploads"

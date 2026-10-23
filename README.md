@@ -52,9 +52,13 @@ these variables under **Project Settings > Environment Variables**:
 - `MYSQL_USER`: the database username.
 - `MYSQL_PASSWORD`: the database password.
 - `MYSQL_DATABASE`: the database name.
+- `MYSQL_SSL`: set to `true` if your provider requires SSL (e.g., PlanetScale, Aiven).
+- `MYSQL_SSL_CA`: optional path/contents for a custom CA certificate.
 - `DEFAULT_ADMIN_PASSWORD`: required only if the database has no `admin`
   account yet.
 
-Redeploy after saving the variables. The application initializes its database
-when the Flask function starts, so it will return an error until the database
-is reachable and all required environment variables are configured.
+Import `niceday_carwash_new.sql` into your hosted database before first login,
+or leave `DEFAULT_ADMIN_PASSWORD` set and the app will create the admin account
+on first startup. The application initializes its database when the Flask
+function starts, so it will return an error until the database is reachable
+and all required environment variables are configured.
