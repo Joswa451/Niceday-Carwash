@@ -67,7 +67,7 @@
                 {% endif %}
 
                 {% set can_pay = booking.payment_status != 'paid'
-                    and booking.payment_method in ['gcash', 'maya', 'bank_transfer']
+                    and booking.payment_method in online_payment_methods
                     and booking.status != 'cancelled' %}
                 {% set can_cancel = booking.status in ['pending', 'confirmed'] %}
                 {% if can_pay or can_cancel %}
@@ -78,6 +78,7 @@
                     {% endif %}
                     {% if can_cancel %}
                     <form method="POST" action="{{ url_for('client_services.booking_process') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="cancel">
                         <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
                         <button type="submit" class="btn btn-danger btn-sm"

@@ -2,9 +2,14 @@
 __pycache__/
 *.py[cod]
 instance/
-static/uploads/*
-!static/uploads/.gitkeep
+frontend/public/static/uploads/*
+!frontend/public/static/uploads/.gitkeep
 .env
 .env.*
+backend.env
+*.env
 !.env.example
 niceday_carwash*.sql
+.vercel/
+*.log
+.DS_Store

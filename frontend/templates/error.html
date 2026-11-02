@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} | {{ title }} | Nice Day Carwash{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="empty-state">
+            <div class="empty-icon">{{ code }}</div>
+            <h3>{{ title }}</h3>
+            <p>{{ message }}</p>
+            <a class="btn btn-primary" href="{{ url_for('main_pages.landing_page') }}">Back to homepage</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

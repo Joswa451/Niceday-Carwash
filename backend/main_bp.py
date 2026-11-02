@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 
-from db import get_db_connection
+from .db import get_db_connection
 
 main_bp = Blueprint("main_pages", __name__)
 

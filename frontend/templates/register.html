@@ -13,6 +13,7 @@
         <p class="auth-subtitle">Join Nice Day Carwash and book in seconds.</p>
 
         <form action="{{ url_for('authentication.register_process') }}" method="POST" class="auth-form" id="registerForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-row">
                 <div class="field">
                     <label for="full_name">Full name</label>

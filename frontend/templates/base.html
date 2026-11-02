@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}Nice Day Carwash offers premium, eco-friendly car care and easy online booking in Iloilo City.{% endblock %}">
+    <meta name="theme-color" content="#0e9aa7">
     <title>{% block title %}Nice Day Carwash{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,16 +13,24 @@
     {% block styles %}{% endblock %}
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
     <header class="site-header">
         <div class="header-inner">
             <a class="logo" href="{{ url_for('main_pages.landing_page') }}">Nice Day <span>Carwash</span></a>
 
             <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="siteNav">&#9776;</button>
 
-            <nav class="site-nav" id="siteNav">
-                <a href="{{ url_for('main_pages.landing_page') }}">Home</a>
-                <a href="{{ url_for('main_pages.about_page') }}">About</a>
-                <a href="{{ url_for('main_pages.services_page') }}">Services</a>
+            <nav class="site-nav" id="siteNav" aria-label="Main navigation">
+                <a href="{{ url_for('main_pages.landing_page') }}"
+                   class="{{ 'active' if request.endpoint == 'main_pages.landing_page' else '' }}"
+                   {% if request.endpoint == 'main_pages.landing_page' %}aria-current="page"{% endif %}>Home</a>
+                <a href="{{ url_for('main_pages.about_page') }}"
+                   class="{{ 'active' if request.endpoint == 'main_pages.about_page' else '' }}"
+                   {% if request.endpoint == 'main_pages.about_page' %}aria-current="page"{% endif %}>About</a>
+                <a href="{{ url_for('main_pages.services_page') }}"
+                   class="{{ 'active' if request.endpoint == 'main_pages.services_page' else '' }}"
+                   {% if request.endpoint == 'main_pages.services_page' %}aria-current="page"{% endif %}>Services</a>
             </nav>
 
             <div class="header-actions">
@@ -35,6 +45,7 @@
                                 <a href="{{ url_for('client_services.my_bookings_page') }}">My bookings</a>
                                 <a href="{{ url_for('main_pages.services_page') }}">Book a service</a>
                             {% endif %}
+                            <a href="{{ url_for('authentication.change_password') }}">Change password</a>
                             <a class="logout-link" href="{{ url_for('authentication.logout') }}">Log out</a>
                         </div>
                     </details>
@@ -47,17 +58,18 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="flash-container">
+            <div class="flash-container" role="status" aria-live="polite">
                 {% for category, message in messages %}
                     <div class="flash flash-{{ category if category in ['success', 'error', 'info'] else 'info' }}">
-                        {{ message }}
+                        <span>{{ message }}</span>
+                        <button type="button" class="flash-close" aria-label="Dismiss message">&times;</button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
 
-    <main class="site-main">
+    <main class="site-main" id="main-content">
         {% block content %}{% endblock %}
     </main>
 
@@ -80,7 +92,7 @@
                 <p>nicedaycarwashiloilo@gmail.com</p>
             </div>
         </div>
-        <div class="footer-bottom">&copy; {{ current_year }} AutoWash &middot; Nice Day Carwash</div>
+        <div class="footer-bottom">&copy; {{ current_year }} Nice Day Carwash &middot; Iloilo City</div>
     </footer>
 
     <script>
@@ -91,6 +103,13 @@
                 const isOpen = siteNav.classList.toggle('open');
                 menuToggle.setAttribute('aria-expanded', isOpen);
             });
+
+            siteNav.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', () => {
+                    siteNav.classList.remove('open');
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                });
+            });
         }
 
         document.addEventListener('click', (event) => {
@@ -99,6 +118,18 @@
                     menu.removeAttribute('open');
                 }
             });
+        });
+
+        document.querySelectorAll('.flash').forEach((flash) => {
+            const close = flash.querySelector('.flash-close');
+            const dismiss = () => {
+                flash.classList.add('is-hiding');
+                setTimeout(() => flash.remove(), 200);
+            };
+            if (close) {
+                close.addEventListener('click', dismiss);
+            }
+            setTimeout(dismiss, 6000);
         });
     </script>
     {% block scripts %}{% endblock %}

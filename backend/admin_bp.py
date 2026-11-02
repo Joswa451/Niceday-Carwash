@@ -1,9 +1,16 @@
-from pymysql.err import IntegrityError
-
-from flask import Blueprint, render_template, request, url_for, redirect, session, flash
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from werkzeug.security import generate_password_hash
 
-from db import get_db_connection
+from .db import INTEGRITY_ERRORS, get_db_connection
 
 admin_bp = Blueprint("admin_panel", __name__, url_prefix="/admin")
 
@@ -45,8 +52,8 @@ def admin_dashboard():
         services = cursor.fetchall()
 
         cursor.execute(
-            "SELECT account_id, account_username, account_role, account_email, created_at "
-            "FROM accounts ORDER BY created_at DESC"
+            "SELECT account_id, account_username, account_role, account_email, "
+            "created_at FROM accounts ORDER BY created_at DESC"
         )
         accounts = cursor.fetchall()
 
@@ -57,8 +64,9 @@ def admin_dashboard():
             accounts=accounts,
             logged_in_user=session["account_logged_in"],
         )
-    except Exception as error:
-        flash(f"Could not load the dashboard: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not load the admin dashboard")
+        flash("Could not load the dashboard. Please try again.", "error")
         return redirect(url_for("main_pages.landing_page"))
     finally:
         if connection:
@@ -94,14 +102,16 @@ def add_service():
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO services (service_name, service_description, price, duration_minutes) "
+            "INSERT INTO services "
+            "(service_name, service_description, price, duration_minutes) "
             "VALUES (%s, %s, %s, %s)",
-            (service_name, service_description, price, duration_minutes),
+            (service_name, service_description or None, price, duration_minutes),
         )
         connection.commit()
         flash(f"Service '{service_name}' added.", "success")
-    except Exception as error:
-        flash(f"Could not add the service: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not add service %r", service_name)
+        flash("Could not add the service. Please try again.", "error")
     finally:
         if connection:
             connection.close()
@@ -145,16 +155,19 @@ def create_account():
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO accounts (account_username, account_password, account_role, account_email) "
+            "INSERT INTO accounts "
+            "(account_username, account_password, account_role, account_email) "
             "VALUES (%s, %s, %s, %s)",
             (username, generate_password_hash(password), role, email),
         )
         connection.commit()
         flash(f"Account '{username}' created.", "success")
-    except IntegrityError:
+    except INTEGRITY_ERRORS:
+        connection.rollback()
         flash("That username or email is already in use.", "error")
-    except Exception as error:
-        flash(f"Could not create the account: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not create account %r", username)
+        flash("Could not create the account. Please try again.", "error")
     finally:
         if connection:
             connection.close()
@@ -170,7 +183,7 @@ def delete_service():
 
     try:
         service_id = int(request.form.get("service_id", ""))
-    except ValueError:
+    except (TypeError, ValueError):
         flash("Invalid service ID.", "error")
         return redirect(url_for("admin_panel.admin_dashboard"))
 
@@ -197,8 +210,9 @@ def delete_service():
             flash("Service deleted.", "success")
         else:
             flash("Service not found.", "error")
-    except Exception as error:
-        flash(f"Could not delete the service: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not delete service %s", service_id)
+        flash("Could not delete the service. Please try again.", "error")
     finally:
         if connection:
             connection.close()
@@ -214,7 +228,7 @@ def delete_booking():
 
     try:
         booking_id = int(request.form.get("booking_id", ""))
-    except ValueError:
+    except (TypeError, ValueError):
         flash("Invalid booking ID.", "error")
         return redirect(url_for("admin_panel.admin_dashboard"))
 
@@ -222,14 +236,30 @@ def delete_booking():
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
+        cursor.execute(
+            "SELECT status FROM bookings WHERE booking_id = %s", (booking_id,)
+        )
+        booking = cursor.fetchone()
+        if not booking:
+            flash("Booking not found.", "error")
+            return redirect(url_for("admin_panel.admin_dashboard"))
+
+        if booking["status"] == "completed":
+            flash(
+                "Completed bookings cannot be deleted. Keep them for your records.",
+                "error",
+            )
+            return redirect(url_for("admin_panel.admin_dashboard"))
+
         cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
         connection.commit()
         if cursor.rowcount > 0:
             flash("Booking deleted.", "success")
         else:
             flash("Booking not found.", "error")
-    except Exception as error:
-        flash(f"Could not delete the booking: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not delete booking %s", booking_id)
+        flash("Could not delete the booking. Please try again.", "error")
     finally:
         if connection:
             connection.close()
@@ -245,7 +275,7 @@ def delete_account():
 
     try:
         account_id = int(request.form.get("account_id", ""))
-    except ValueError:
+    except (TypeError, ValueError):
         flash("Invalid account ID.", "error")
         return redirect(url_for("admin_panel.admin_dashboard"))
 
@@ -271,7 +301,8 @@ def delete_account():
             return redirect(url_for("admin_panel.admin_dashboard"))
 
         cursor.execute(
-            "SELECT account_username FROM accounts WHERE account_id = %s", (account_id,)
+            "SELECT account_username FROM accounts WHERE account_id = %s",
+            (account_id,),
         )
         account = cursor.fetchone()
         if not account:
@@ -281,8 +312,9 @@ def delete_account():
         cursor.execute("DELETE FROM accounts WHERE account_id = %s", (account_id,))
         connection.commit()
         flash(f"Account '{account['account_username']}' deleted.", "success")
-    except Exception as error:
-        flash(f"Could not delete the account: {error}", "error")
+    except Exception:
+        current_app.logger.exception("Could not delete account %s", account_id)
+        flash("Could not delete the account. Please try again.", "error")
     finally:
         if connection:
             connection.close()

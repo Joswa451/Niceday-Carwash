@@ -74,6 +74,7 @@
                     No real money is charged until a payment gateway is connected.
                 </p>
                 <form method="POST" action="{{ url_for('client_services.payment_page', booking_id=booking.booking_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary">
                         Pay &#8369;{{ booking.price|money }} now
                     </button>

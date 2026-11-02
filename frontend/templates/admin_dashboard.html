@@ -18,6 +18,7 @@
                 <div class="admin-user">
                     <span>Signed in as <strong>{{ logged_in_user.account_username }}</strong></span>
                     <a class="btn btn-ghost btn-sm" href="{{ url_for('main_pages.landing_page') }}">View site</a>
+                    <a class="btn btn-ghost btn-sm" href="{{ url_for('authentication.change_password') }}">Change password</a>
                     <a class="btn btn-light btn-sm" href="{{ url_for('authentication.logout') }}">Log out</a>
                 </div>
             </div>
@@ -69,6 +70,25 @@
                 </div>
 
                 {% if bookings %}
+                <div class="table-toolbar">
+                    <div class="field toolbar-search">
+                        <label class="sr-only" for="bookingSearch">Search bookings</label>
+                        <input type="search" id="bookingSearch"
+                               placeholder="Search by client, customer, vehicle, service, or ID">
+                    </div>
+                    <div class="field toolbar-filter">
+                        <label for="bookingStatusFilter">Status</label>
+                        <select id="bookingStatusFilter">
+                            <option value="">All statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-wrap">
                     <table>
                         <thead>
@@ -84,9 +104,10 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bookingsTableBody">
                             {% for booking in bookings %}
-                            <tr>
+                            <tr data-status="{{ booking.status }}"
+                                data-search="{{ (booking.booking_id|string ~ ' ' ~ booking.client_name ~ ' ' ~ booking.customer_name ~ ' ' ~ booking.vehicle_type ~ ' ' ~ booking.service_name)|lower }}">
                                 <td>#{{ booking.booking_id }}</td>
                                 <td>{{ booking.client_name }}</td>
                                 <td>
@@ -112,6 +133,7 @@
                                 <td>
                                     <div class="row-actions">
                                         <form method="POST" action="{{ url_for('client_services.booking_process') }}" class="inline-form">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
                                             <select name="status" class="status-select" aria-label="Booking status">
                                                 <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
@@ -124,16 +146,20 @@
                                         </form>
                                         {% if booking.payment_status != 'paid' and booking.status != 'cancelled' %}
                                         <form method="POST" action="{{ url_for('client_services.booking_process') }}" class="inline-form">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="action" value="mark_paid">
                                             <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
                                             <button type="submit" class="btn btn-outline btn-sm">Mark paid</button>
                                         </form>
                                         {% endif %}
+                                        {% if booking.status != 'completed' %}
                                         <form method="POST" action="{{ url_for('admin_panel.delete_booking') }}" class="inline-form">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
                                             <button type="submit" class="btn btn-danger btn-sm"
                                                     onclick="return confirm('Delete this booking? This cannot be undone.')">Delete</button>
                                         </form>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -141,6 +167,7 @@
                         </tbody>
                     </table>
                 </div>
+                <p class="cell-muted" id="bookingNoResults" hidden>No bookings match your filters.</p>
                 {% else %}
                 <div class="empty-state">
                     <div class="empty-icon">&#128197;</div>
@@ -159,6 +186,7 @@
                 <div class="panel">
                     <h2>Add a new service</h2>
                     <form method="POST" action="{{ url_for('admin_panel.add_service') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-row">
                             <div class="field">
                                 <label for="service_name">Service name</label>
@@ -208,6 +236,7 @@
                                 <td>{{ service.created_at|datefmt }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('admin_panel.delete_service') }}" class="inline-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="service_id" value="{{ service.service_id }}">
                                         <button type="submit" class="btn btn-danger btn-sm"
                                                 onclick="return confirm('Delete this service? This cannot be undone.')">Delete</button>
@@ -251,6 +280,7 @@
                 <div class="panel">
                     <h2>Create an account</h2>
                     <form method="POST" action="{{ url_for('admin_panel.create_account') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-row">
                             <div class="field">
                                 <label for="username_inp">Username</label>
@@ -305,9 +335,10 @@
                                 <td>
                                     {% if account.account_id != logged_in_user.account_id %}
                                     <form method="POST" action="{{ url_for('admin_panel.delete_account') }}" class="inline-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="account_id" value="{{ account.account_id }}">
-                                        <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Delete account {{ account.account_username }}? This cannot be undone.')">Delete</button>
+                                        <button type="submit" class="btn btn-danger btn-sm js-confirm-delete"
+                                                data-confirm="Delete account {{ account.account_username }}? This cannot be undone.">Delete</button>
                                     </form>
                                     {% else %}
                                     <span class="cell-muted">Current user</span>
@@ -382,18 +413,67 @@
     </div>
 
     <script>
+        function activateTab(link) {
+            const targetId = link.getAttribute('href').substring(1);
+
+            document.querySelectorAll('.tab-link').forEach((tab) => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+
+            link.classList.add('active');
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.classList.add('active');
+            }
+            history.replaceState(null, '', '#' + targetId);
+        }
+
         document.querySelectorAll('.tab-link').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
-                const targetId = link.getAttribute('href').substring(1);
+                activateTab(link);
+            });
+        });
 
-                document.querySelectorAll('.tab-link').forEach((tab) => tab.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach((content) => content.classList.remove('active'));
+        const hashTab = document.querySelector('.tab-link[href="' + window.location.hash + '"]');
+        if (hashTab) {
+            activateTab(hashTab);
+        }
 
-                link.classList.add('active');
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.classList.add('active');
+        const bookingSearch = document.getElementById('bookingSearch');
+        const bookingStatusFilter = document.getElementById('bookingStatusFilter');
+        const bookingsTableBody = document.getElementById('bookingsTableBody');
+        const bookingNoResults = document.getElementById('bookingNoResults');
+
+        function filterBookings() {
+            if (!bookingsTableBody) {
+                return;
+            }
+            const query = (bookingSearch?.value || '').trim().toLowerCase();
+            const status = bookingStatusFilter?.value || '';
+            let visible = 0;
+
+            bookingsTableBody.querySelectorAll('tr').forEach((row) => {
+                const matchesQuery = !query || (row.dataset.search || '').includes(query);
+                const matchesStatus = !status || row.dataset.status === status;
+                const show = matchesQuery && matchesStatus;
+                row.style.display = show ? '' : 'none';
+                if (show) {
+                    visible += 1;
+                }
+            });
+
+            if (bookingNoResults) {
+                bookingNoResults.hidden = visible !== 0;
+            }
+        }
+
+        bookingSearch?.addEventListener('input', filterBookings);
+        bookingStatusFilter?.addEventListener('change', filterBookings);
+
+        document.querySelectorAll('.js-confirm-delete').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                if (!window.confirm(button.dataset.confirm)) {
+                    event.preventDefault();
                 }
             });
         });
