@@ -152,14 +152,6 @@
                                             <button type="submit" class="btn btn-outline btn-sm">Mark paid</button>
                                         </form>
                                         {% endif %}
-                                        {% if booking.status != 'completed' %}
-                                        <form method="POST" action="{{ url_for('admin_panel.delete_booking') }}" class="inline-form">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
-                                            <button type="submit" class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Delete this booking? This cannot be undone.')">Delete</button>
-                                        </form>
-                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -222,7 +214,6 @@
                                 <th>Price</th>
                                 <th>Duration</th>
                                 <th>Created</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -234,14 +225,6 @@
                                 <td>&#8369;{{ service.price|money }}</td>
                                 <td>{{ service.duration_minutes }} min</td>
                                 <td>{{ service.created_at|datefmt }}</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('admin_panel.delete_service') }}" class="inline-form">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="service_id" value="{{ service.service_id }}">
-                                        <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Delete this service? This cannot be undone.')">Delete</button>
-                                    </form>
-                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -319,7 +302,6 @@
                                 <th>Role</th>
                                 <th>Email</th>
                                 <th>Created</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -332,18 +314,6 @@
                                 </td>
                                 <td>{{ account.account_email or '-' }}</td>
                                 <td>{{ account.created_at|datefmt }}</td>
-                                <td>
-                                    {% if account.account_id != logged_in_user.account_id %}
-                                    <form method="POST" action="{{ url_for('admin_panel.delete_account') }}" class="inline-form">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="account_id" value="{{ account.account_id }}">
-                                        <button type="submit" class="btn btn-danger btn-sm js-confirm-delete"
-                                                data-confirm="Delete account {{ account.account_username }}? This cannot be undone.">Delete</button>
-                                    </form>
-                                    {% else %}
-                                    <span class="cell-muted">Current user</span>
-                                    {% endif %}
-                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -469,14 +439,6 @@
 
         bookingSearch?.addEventListener('input', filterBookings);
         bookingStatusFilter?.addEventListener('change', filterBookings);
-
-        document.querySelectorAll('.js-confirm-delete').forEach((button) => {
-            button.addEventListener('click', (event) => {
-                if (!window.confirm(button.dataset.confirm)) {
-                    event.preventDefault();
-                }
-            });
-        });
     </script>
 </body>
 </html>

@@ -20,7 +20,7 @@ const TABS = [
   ['reports', 'Reports'],
 ]
 
-function AdminBookingRow({ booking, onUpdateStatus, onMarkPaid, onDelete }) {
+function AdminBookingRow({ booking, onUpdateStatus, onMarkPaid }) {
   const [status, setStatus] = useState(booking.status)
 
   useEffect(() => {
@@ -82,15 +82,6 @@ function AdminBookingRow({ booking, onUpdateStatus, onMarkPaid, onDelete }) {
               onClick={() => onMarkPaid(booking.booking_id)}
             >
               Mark paid
-            </button>
-          ) : null}
-          {booking.status !== 'completed' ? (
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              onClick={() => onDelete(booking.booking_id)}
-            >
-              Delete
             </button>
           ) : null}
         </div>
@@ -223,14 +214,6 @@ export default function AdminDashboardPage() {
       'Booking marked as paid.',
     )
 
-  const deleteBooking = (bookingId) => {
-    if (!window.confirm('Delete this booking? This cannot be undone.')) return
-    runAction(
-      () => apiRequest(`/bookings/${bookingId}`, { method: 'DELETE', token }),
-      'Booking deleted.',
-    )
-  }
-
   const handleServiceChange = (event) => {
     setServiceForm((current) => ({ ...current, [event.target.name]: event.target.value }))
   }
@@ -262,14 +245,6 @@ export default function AdminDashboardPage() {
     })
   }
 
-  const deleteService = (serviceId) => {
-    if (!window.confirm('Delete this service? This cannot be undone.')) return
-    runAction(
-      () => apiRequest(`/admin/services/${serviceId}`, { method: 'DELETE', token }),
-      'Service deleted.',
-    )
-  }
-
   const handleAccountChange = (event) => {
     setAccountForm((current) => ({ ...current, [event.target.name]: event.target.value }))
   }
@@ -294,16 +269,6 @@ export default function AdminDashboardPage() {
         setAccountForm({ username_inp: '', password_inp: '', role_inp: '', email_inp: '' })
       }
     })
-  }
-
-  const deleteAccount = (account) => {
-    if (!window.confirm(`Delete account ${account.account_username}? This cannot be undone.`)) {
-      return
-    }
-    runAction(
-      () => apiRequest(`/admin/accounts/${account.account_id}`, { method: 'DELETE', token }),
-      'Account deleted.',
-    )
   }
 
   const handleLogout = () => {
@@ -437,7 +402,6 @@ export default function AdminDashboardPage() {
                         booking={booking}
                         onUpdateStatus={updateStatus}
                         onMarkPaid={markPaid}
-                        onDelete={deleteBooking}
                       />
                     ))}
                   </tbody>
@@ -532,7 +496,6 @@ export default function AdminDashboardPage() {
                     <th>Price</th>
                     <th>Duration</th>
                     <th>Created</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -544,16 +507,6 @@ export default function AdminDashboardPage() {
                       <td>&#8369;{formatMoney(service.price)}</td>
                       <td>{service.duration_minutes} min</td>
                       <td>{formatDate(service.created_at)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={() => deleteService(service.service_id)}
-                          disabled={busy}
-                        >
-                          Delete
-                        </button>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -661,7 +614,6 @@ export default function AdminDashboardPage() {
                     <th>Role</th>
                     <th>Email</th>
                     <th>Created</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -676,20 +628,6 @@ export default function AdminDashboardPage() {
                       </td>
                       <td>{account.account_email || '-'}</td>
                       <td>{formatDate(account.created_at)}</td>
-                      <td>
-                        {account.account_id !== user?.account_id ? (
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm"
-                            onClick={() => deleteAccount(account)}
-                            disabled={busy}
-                          >
-                            Delete
-                          </button>
-                        ) : (
-                          <span className="cell-muted">Current user</span>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
