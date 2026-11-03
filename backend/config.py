@@ -87,9 +87,7 @@ def _build_database_url():
 
 
 class Config:
-    SECRET_KEY = os.environ.get(
-        "SECRET_KEY", "nice-day-carwash-dev-key-change-me"
-    )
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     DATABASE_URL = _build_database_url()
 
     SESSION_COOKIE_HTTPONLY = True

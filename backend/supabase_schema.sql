@@ -90,15 +90,7 @@ from (
 ) as seed(service_name, service_description, price, duration_minutes)
 where not exists (select 1 from public.services);
 
-insert into public.accounts
-    (account_username, account_password, account_role, account_email, full_name)
-values (
-    'admin',
-    'scrypt:32768:8:1$hVbG8MvULXH0Dazz$15a6e55f498f3c777e9da6f0c42db90f07595a3638fd7e3feeecccfb0c869596ffc0dd7ca52f70334a48b9a7a6f503fbaa7f442ca0ae6ba2c9f462897738a565',
-    'admin',
-    'admin@nicedaycarwash.local',
-    'Administrator'
-)
-on conflict do nothing;
+-- The administrator account is created on first Flask startup when
+-- DEFAULT_ADMIN_PASSWORD is set in the environment. No password is stored here.
 
 commit;

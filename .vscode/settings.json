@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^test -d frontend/node_modules && echo 'node_modules present' \\|\\| echo 'node_modules absent'; test -f frontend/package-lock\\.json && echo 'lockfile present' \\|\\| echo 'lockfile absent'; python -V; node --version; npm --version$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

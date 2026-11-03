@@ -1,12 +1,14 @@
 import logging
 import os
+import secrets
 from datetime import date, datetime, time, timedelta
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .admin_bp import admin_bp
+from .api_bp import api_bp
 from .auth_bp import auth_bp
 from .client_bp import client_bp
 from .config import LOCAL_TZ, Config
@@ -38,10 +40,15 @@ def create_app():
     app.config.from_object(Config)
 
     app.logger.setLevel(logging.INFO)
-    if app.config["SECRET_KEY"] == "nice-day-carwash-dev-key-change-me":
+    if not app.config.get("SECRET_KEY"):
+        if os.environ.get("RENDER") or os.environ.get("VERCEL"):
+            raise RuntimeError(
+                "SECRET_KEY must be set as an environment variable in production."
+            )
+        app.config["SECRET_KEY"] = secrets.token_hex(32)
         app.logger.warning(
-            "SECRET_KEY is using the insecure development default. "
-            "Set a long random SECRET_KEY before deploying."
+            "SECRET_KEY is not set. Using a random development key; "
+            "sessions and API tokens will reset when the process restarts."
         )
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     csrf.init_app(app)
@@ -55,6 +62,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(client_bp)
+    app.register_blueprint(api_bp)
+    csrf.exempt(api_bp)
 
     @app.before_request
     def _prepare_database():
@@ -77,6 +86,27 @@ def create_app():
         response.headers.setdefault(
             "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
         )
+
+        if request.path.startswith("/api"):
+            configured = os.environ.get("CORS_ORIGINS", "*")
+            origins = [
+                item.strip().rstrip("/")
+                for item in configured.split(",")
+                if item.strip()
+            ]
+            origin = (request.headers.get("Origin") or "").rstrip("/")
+            if "*" in origins or not origins:
+                response.headers["Access-Control-Allow-Origin"] = "*"
+            elif origin in origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Vary"] = "Origin"
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Content-Type, Authorization"
+            )
+            response.headers["Access-Control-Allow-Methods"] = (
+                "GET, POST, PATCH, DELETE, OPTIONS"
+            )
+            response.headers["Access-Control-Max-Age"] = "86400"
         return response
 
     @app.template_filter("datefmt")
@@ -137,11 +167,15 @@ def create_app():
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
         app.logger.warning("CSRF validation failed: %s", error.description)
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Invalid or expired request token."}), 400
         flash("Your session expired. Please try again.", "error")
         return redirect(url_for("main_pages.landing_page"))
 
     @app.errorhandler(404)
     def not_found(error):
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Not found."}), 404
         return (
             render_template(
                 "error.html",
@@ -152,9 +186,17 @@ def create_app():
             404,
         )
 
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Method not allowed."}), 405
+        return error
+
     @app.errorhandler(500)
     def server_error(error):
         app.logger.exception("Unhandled server error")
+        if request.path.startswith("/api"):
+            return jsonify({"error": "Something went wrong."}), 500
         return (
             render_template(
                 "error.html",
