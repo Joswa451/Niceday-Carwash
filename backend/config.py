@@ -2,7 +2,7 @@ import ipaddress
 import os
 import re
 from datetime import timedelta, timezone
-from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 from dotenv import load_dotenv
 
@@ -133,7 +133,7 @@ def _normalize_database_url(url):
         url = "postgresql://" + url[len("postgres://") :]
 
     try:
-        parsed = urlparse(url)
+        parsed = urlsplit(url)
     except ValueError as exc:
         raise ValueError(f"could not be parsed ({exc})") from exc
 
@@ -183,7 +183,7 @@ def _normalize_database_url(url):
     if not has_sslmode and not is_socket and not _is_local_host(hostname):
         query.append(("sslmode", "require"))
 
-    return urlunparse(parsed._replace(query=urlencode(query)))
+    return urlunsplit(parsed._replace(query=urlencode(query)))
 
 
 def _build_database_url():

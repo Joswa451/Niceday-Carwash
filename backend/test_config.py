@@ -28,6 +28,26 @@ class DatabaseUrlTests(TestCase):
         self.assertEqual(parsed.path, "/postgres")
         self.assertEqual(parse_qs(parsed.query)["sslmode"], ["require"])
 
+    def test_dns_hostname_does_not_use_ip_validation(self):
+        with (
+            mock.patch.object(
+                config.ipaddress,
+                "IPv4Address",
+                side_effect=AssertionError("IPv4 parser must not run for DNS"),
+            ),
+            mock.patch.object(
+                config.ipaddress,
+                "IPv6Address",
+                side_effect=AssertionError("IPv6 parser must not run for DNS"),
+            ),
+        ):
+            result = self.build_url(
+                "postgresql://postgres.project:secret@"
+                "aws-0-eu-west-1.pooler.supabase.com:6543/postgres"
+            )
+
+        self.assertIn("aws-0-eu-west-1.pooler.supabase.com", result)
+
     def test_ipv4_hostname(self):
         result = self.build_url(
             "postgresql://user:pass@192.0.2.10:5432/carwash"
