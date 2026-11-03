@@ -1,8 +1,14 @@
+import json
 import os
+import subprocess
+import sys
+from pathlib import Path
 from unittest import TestCase, mock
 from urllib.parse import parse_qs, unquote, urlparse
 
 from backend import config
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class DatabaseUrlTests(TestCase):
@@ -27,6 +33,48 @@ class DatabaseUrlTests(TestCase):
         self.assertEqual(parsed.password, "secret")
         self.assertEqual(parsed.path, "/postgres")
         self.assertEqual(parse_qs(parsed.query)["sslmode"], ["require"])
+
+    def test_flask_app_import_uses_corrected_config_for_render_hostname(self):
+        database_url = (
+            "postgresql://postgres.project:secret@"
+            "aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require"
+        )
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "DATABASE_URL": database_url,
+                "SECRET_KEY": "test-secret",
+                "RENDER": "true",
+                "PYTHONPATH": str(PROJECT_ROOT),
+            }
+        )
+        script = """
+import json
+import backend.config as config
+from backend.app import app
+
+print(json.dumps({
+    "config_file": config.__file__,
+    "configured_url": config.Config.DATABASE_URL,
+    "app_url": app.config["DATABASE_URL"],
+}))
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=PROJECT_ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        payload = json.loads(result.stdout)
+
+        self.assertTrue(payload["config_file"].endswith("backend/config.py"))
+        self.assertEqual(payload["configured_url"], payload["app_url"])
+        self.assertIn(
+            "aws-0-eu-west-1.pooler.supabase.com:6543", payload["app_url"]
+        )
+        self.assertIn("sslmode=require", payload["app_url"])
 
     def test_dns_hostname_does_not_use_ip_validation(self):
         with (
