@@ -26,9 +26,13 @@ export default function LoginPage() {
         method: 'POST',
         body: { username: form.username, password: form.password },
       })
-      signIn(result.data)
+      const session = result?.data
+      if (!session?.user) {
+        throw new Error('The server did not return a valid session. Please try again.')
+      }
+      signIn(session)
       notify(result.message || 'Signed in successfully.', 'success')
-      const fallback = result.data.user.account_role === 'admin' ? '/admin/dashboard' : '/'
+      const fallback = session.user.account_role === 'admin' ? '/admin/dashboard' : '/'
       navigate(location.state?.from || fallback, { replace: true })
     } catch (err) {
       setError(err.message)

@@ -24,7 +24,7 @@ export default function MyBookingsPage() {
   const loadBookings = useCallback(() => {
     apiRequest('/bookings', { token })
       .then((result) => {
-        setBookings(result.data.bookings || [])
+        setBookings(Array.isArray(result?.data?.bookings) ? result.data.bookings : [])
         setError('')
       })
       .catch((err) => setError(err.message))

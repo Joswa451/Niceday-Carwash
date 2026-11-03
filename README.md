@@ -115,9 +115,11 @@ The React app runs at `http://localhost:5173`. Set `VITE_API_URL` in
 5. Add `VITE_API_URL=https://your-api.onrender.com/api`.
 6. Deploy.
 
-`frontend/vercel.json` rewrites all routes to `index.html` so client-side routing
-works on refresh. Do not deploy this project with the repository root as the Vercel
-root directory: that serves only static files and causes the `NOT_FOUND` page.
+`frontend/vercel.json` rewrites client-side routes to `index.html` so routing works
+on refresh. API calls use the absolute `VITE_API_URL` and therefore go directly to
+Render instead of that same-origin rewrite. Do not deploy this project with the
+repository root as the Vercel root directory: that serves only static files and
+causes the `NOT_FOUND` page.
 
 If you already created a Vercel project for the old Flask deployment, either change
 its Root Directory to `frontend` and redeploy, or create a new Vercel project from
@@ -138,6 +140,12 @@ Render filesystems are temporary.
   (`prepare_threshold=None`) so it works with the transaction pooler.
 - **`Your session expired`** – the CSRF token expired or the `SECRET_KEY` changed.
   Reload the page and try again.
+- **Services show a non-JSON response error, or registration returns `405`** – the
+  frontend is calling `/api` on Vercel instead of the Render backend. Set
+  `VITE_API_URL=https://your-api.onrender.com/api` in the Vercel project and
+  redeploy; Vite environment variables are applied at build time.
+- **CORS errors in the browser** – add the exact Vercel origin (no trailing slash)
+  to `CORS_ORIGINS` on Render, then redeploy the backend.
 
 ## Project layout
 

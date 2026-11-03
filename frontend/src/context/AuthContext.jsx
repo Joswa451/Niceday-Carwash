@@ -26,8 +26,11 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signIn = useCallback(
-    ({ token, user }) => {
-      saveSession({ token, user })
+    (next) => {
+      if (!next?.token || !next?.user) {
+        throw new Error('The server did not return a valid session. Please try again.')
+      }
+      saveSession({ token: next.token, user: next.user })
     },
     [saveSession],
   )
@@ -50,7 +53,13 @@ export function AuthProvider({ children }) {
     apiRequest('/auth/me', { token: session.token })
       .then((result) => {
         if (!active) return
-        const next = { ...session, user: result.data.user }
+        const nextUser = result?.data?.user
+        if (!nextUser) {
+          localStorage.removeItem(STORAGE_KEY)
+          setSession(null)
+          return
+        }
+        const next = { ...session, user: nextUser }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
         setSession(next)
       })

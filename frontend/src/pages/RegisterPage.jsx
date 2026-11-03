@@ -60,9 +60,15 @@ export default function RegisterPage() {
           confirm_password: form.confirm_password,
         },
       })
-      signIn(result.data)
-      notify(result.message || 'Registration successful.', 'success')
-      navigate('/', { replace: true })
+      const session = result?.data
+      if (session?.token && session?.user) {
+        signIn(session)
+        notify(result.message || 'Registration successful.', 'success')
+        navigate('/', { replace: true })
+        return
+      }
+      notify('Account created. Please sign in.', 'success')
+      navigate('/login', { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {

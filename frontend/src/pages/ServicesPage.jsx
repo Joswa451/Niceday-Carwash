@@ -55,12 +55,20 @@ export default function ServicesPage() {
 
   useEffect(() => {
     let active = true
+    setLoading(true)
+    setError('')
     apiRequest('/services')
       .then((result) => {
-        if (active) setServices(result.data.services || [])
+        const nextServices = result?.data?.services
+        if (!Array.isArray(nextServices)) {
+          throw new Error('The API returned an invalid services response.')
+        }
+        if (active) setServices(nextServices)
       })
       .catch((err) => {
-        if (active) setError(err.message)
+        if (!active) return
+        setServices([])
+        setError(err.message)
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -123,7 +131,10 @@ export default function ServicesPage() {
           notes: form.notes,
         },
       })
-      const booking = result.data.booking
+      const booking = result?.data?.booking
+      if (!booking?.booking_id) {
+        throw new Error('The booking response was invalid. Please check My Bookings.')
+      }
       notify(result.message || 'Booking created successfully.', 'success')
       closeModal()
       if (ONLINE_METHODS.includes(form.payment_method)) {
@@ -155,7 +166,7 @@ export default function ServicesPage() {
           {error ? <div className="app-error">{error}</div> : null}
           {loading ? <div className="app-loading">Loading services...</div> : null}
 
-          {!loading && services.length === 0 ? (
+          {!loading && !error && services.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">&#128295;</div>
               <h3>No services available yet</h3>

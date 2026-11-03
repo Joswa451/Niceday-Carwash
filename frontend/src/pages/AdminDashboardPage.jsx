@@ -132,9 +132,9 @@ export default function AdminDashboardPage() {
     apiRequest('/admin/dashboard', { token })
       .then((result) => {
         setData({
-          bookings: result.data.bookings || [],
-          services: result.data.services || [],
-          accounts: result.data.accounts || [],
+          bookings: Array.isArray(result?.data?.bookings) ? result.data.bookings : [],
+          services: Array.isArray(result?.data?.services) ? result.data.services : [],
+          accounts: Array.isArray(result?.data?.accounts) ? result.data.accounts : [],
         })
         setError('')
       })

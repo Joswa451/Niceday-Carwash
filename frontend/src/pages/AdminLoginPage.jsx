@@ -29,7 +29,11 @@ export default function AdminLoginPage() {
           admin_only: true,
         },
       })
-      signIn(result.data)
+      const session = result?.data
+      if (!session?.user || session.user.account_role !== 'admin') {
+        throw new Error('The server did not return a valid admin session. Please try again.')
+      }
+      signIn(session)
       notify('Admin signed in successfully.', 'success')
       navigate('/admin/dashboard', { replace: true })
     } catch (err) {

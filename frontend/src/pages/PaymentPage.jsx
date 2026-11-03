@@ -26,7 +26,7 @@ export default function PaymentPage() {
   const loadBooking = useCallback(() => {
     apiRequest(`/bookings/${bookingId}`, { token })
       .then((result) => {
-        setBooking(result.data.booking)
+        setBooking(result?.data?.booking || null)
         setError('')
       })
       .catch((err) => setError(err.message))

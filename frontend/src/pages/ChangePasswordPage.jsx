@@ -38,7 +38,7 @@ export default function ChangePasswordPage() {
         token,
         body: form,
       })
-      if (result.data?.token) updateToken(result.data.token)
+      if (result?.data?.token) updateToken(result.data.token)
       notify(result.message || 'Password updated successfully.', 'success')
       navigate(user?.account_role === 'admin' ? '/admin/dashboard' : '/', { replace: true })
     } catch (err) {
